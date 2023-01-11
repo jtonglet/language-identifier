@@ -34,7 +34,7 @@ class LanguageIdentifier :
         self.tokenizers_dict = {}
 
 
-    def fit(self,train,validation):
+    def fit(self,train,validation=None):
         '''
         Instantiate and train a bidirectional LSTM submodel for each alphabet with more than 2 languages.
         Params:
@@ -62,8 +62,11 @@ class LanguageIdentifier :
             #Create subsets of the train and validation set corresponding to the alphabet
             train_alphabet = train[train['alphabet']==k]
             languages_in_alphabet = list(train_alphabet.labels.unique())
-            validation_alphabet = validation[validation['alphabet']==k]
-            validation_alphabet = validation_alphabet[validation['labels'].isin(languages_in_alphabet)]
+            if not validation is None:
+                validation_alphabet = validation[validation['alphabet']==k]
+                validation_alphabet = validation_alphabet[validation['labels'].isin(languages_in_alphabet)]
+            else:
+                validation_alphabet = None
             #Store target labels in the label dictionary
             lencoder =LabelEncoder()
             lencoder.fit(train_alphabet['labels'])
@@ -92,20 +95,21 @@ class LanguageIdentifier :
         self.tokenizers_dict[alphabet] = tokenizer
         #Tokenize datasets
         x_train_seq = tokenizer.texts_to_sequences(train['text'])
-        x_validation_seq = tokenizer.texts_to_sequences(validation['text'])
-        #Encode labels
+        x_train_padded = keras.preprocessing.sequence.pad_sequences(x_train_seq,maxlen=200)
         lencoder =LabelEncoder()
         y_train = lencoder.fit_transform(train['labels'])
-        y_validation = lencoder.transform(validation['labels'])
         y_train = tf.keras.utils.to_categorical(y_train)
-        y_validation = tf.keras.utils.to_categorical(y_validation)
-        #Padding
-        x_train_padded = keras.preprocessing.sequence.pad_sequences(x_train_seq,
-                                                            maxlen=200)
-        x_valid_padded = keras.preprocessing.sequence.pad_sequences(x_validation_seq,
-                                                            maxlen=200)
+        if not validation is None:
+            x_validation_seq = tokenizer.texts_to_sequences(validation['text'])
+            x_validation_padded = keras.preprocessing.sequence.pad_sequences(x_validation_seq,maxlen=200)
+            y_validation = lencoder.transform(validation['labels'])
+            y_validation = tf.keras.utils.to_categorical(y_validation)
+            validation_data = (x_validation_padded, y_validation)
+        else:
+            validation_data = None
+            
         #Fit model
-        model.fit(x_train_padded, y_train, batch_size=32, epochs=2, validation_data=(x_valid_padded, y_validation))
+        model.fit(x_train_padded, y_train, batch_size=32, epochs=2, validation_data=validation_data)
 
 
     def predict(self,data):
