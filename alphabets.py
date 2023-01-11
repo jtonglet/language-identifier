@@ -1,5 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tuesday Jan 10 2023 
+@author : Jonathan Tonglet
+"""
+
+import re
 #Alphabet recognition regular expressions
-#Modify those functions to add coverage of additional languages
+#Create additional is_alphabet functions with corresponding unicodes to cover more alphabets 
 
 def is_latin(text):
     #Languages in dataset : Dutch, English, French, German, Italian, Polish, Portuguese, Spanish, Swahili, Turkish, Vietnamese

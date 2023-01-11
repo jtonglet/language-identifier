@@ -2,37 +2,14 @@
 """
 Created on Saturday Jan 07 2023 
 @author : Jonathan Tonglet
-Language Identification Task UKP Lab
-
-The task is to implement a model to identify the language a document is written in. 
-The model is trained and evaluated on the Papluca Language Identification datasets, 
-which contains texts written in 20 different languages.
-Link : https://huggingface.co/datasets/papluca/language-identification 
-
-The model consists of two hierarchical steps :
-1) Identify with regular expressions the main alphabet used in the text
-2) Identify the language 
-    - For alphabets with only one corresponding language : assign language directly based on regular expressions
-    - For alphabets with more than one corresponding language (e.g. latin, arabic) : train a bi-directional LSTM network to predict the language
-
-The proposed model can scale to additional languages and alphabets.
-
-Results on test set : 
-    - Accuracy score : 0.9689
-    - Macro F1 score : 0.9693
-""" 
+"""
 
 #Import packages
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import datasets
 import tensorflow as tf
 from tensorflow import keras
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.preprocessing import LabelEncoder
 import pickle
-import re
 import os
 import warnings
 warnings.filterwarnings('ignore')
@@ -184,85 +161,3 @@ class LanguageIdentifier :
             if filename=='tokenizers.pickle':
                 with open(f,'rb') as handle:
                     self.tokenizers_dict = pickle.load(handle)
-            
-
-        
-    
-#Alphabet recognition regular expressions
-#Modify those functions to add coverage of additional languages
-
-def is_latin(text):
-    #Languages in dataset : Dutch, English, French, German, Italian, Polish, Portuguese, Spanish, Swahili, Turkish, Vietnamese
-    return bool(re.search('[\u0000-\u007F]', text))
-def is_cyrillic(text):
-    #Languages in dataset : Bulgarian, Russian
-    return bool(re.search('[\u0400-\u04FF]', text))
-def is_devanagari(text):
-    #Languages in dataset : Hindi.
-    return bool(re.search('[\u0900-\u097F]', text))
-def is_arabic(text):
-    #Languages in dataset : Arabic, Urdu.
-    return bool(re.search('[\u0600-\u06FF]', text))
-def is_greek(text):
-    #Languages in dataset : Modern Greek.
-    return bool(re.search('[\u0370-\u03FF]', text))
-def is_cjk(text):
-    #Languages in dataset : Chinese, Japanese.
-    return bool(re.search('[\u4E00-\u9FFF]', text))
-def is_thai(text):
-    #Languages in dataset : Thai.
-    return bool(re.search('[\u0E00-\u0E7F]', text))
-
-
-def check_alphabet(text):
-    #Assign its corresponding alphabet to a text.
-    if is_cjk(text):
-        alphabet = 'cjk'
-    elif is_arabic(text):
-        alphabet = 'arabic'
-    elif is_devanagari(text):
-        alphabet = 'devanagari'
-    elif is_cyrillic(text):
-        alphabet = 'cyrillic'
-    elif is_greek(text):
-        alphabet = 'greek'
-    elif is_thai(text):
-        alphabet = 'thai'
-    elif is_latin(text):
-        alphabet = 'latin'
-    else:
-    #Non-assigned texts in train set are CJK texts with special characters not listed in the regular expressions
-        alphabet = 'cjk'
-    return alphabet
-
-
-
-if __name__=='__main__':    
-    #Load datasets
-    dataset = datasets.load_dataset('papluca/language-identification')
-    train = pd.DataFrame(dataset['train'])
-    validation = pd.DataFrame(dataset['validation'])
-    test = pd.DataFrame(dataset['test'])
-    #Identify alphabets for each text
-    train['alphabet'] = train['text'].apply(lambda row : check_alphabet(row))
-    validation['alphabet'] = validation['text'].apply(lambda row : check_alphabet(row))
-    test['alphabet'] = test['text'].apply(lambda row : check_alphabet(row))
-    #Train the identifier model
-    identifier = LanguageIdentifier(embeddings_dims=50,multilingual_alphabets=['cjk','arabic','cyrillic','latin'])  
-    # identifier.fit(train,validation)
-    #Save and load model (attempt)
-    # identifier.save()
-    identifier.load()
-    #Make predictions
-    preds = identifier.predict(test)
-    #Evaluate results
-    print('Accuracy score : %s'%accuracy_score(test['labels'],preds))
-    print('F1 score : %s'%f1_score(test['labels'],preds,average='macro'))
-    confusion_matrix = confusion_matrix(test['labels'],preds)
-    #Plot confusion matrix
-    fig, ax = plt.subplots(figsize=(7,7))
-    display_labels = ['ar','bg','de','th','en','es','fr','hi','it','jp','nl','pl','pt','ru','sw','el','tr','ur','vi','zh']
-    disp = ConfusionMatrixDisplay(confusion_matrix,display_labels=display_labels)
-    disp.plot(ax=ax, xticks_rotation='vertical', values_format='d')
-    plt.title("Confusion Matrix of the model predictions")
-    plt.show()
