@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
 from lang_identifier import LanguageIdentifier 
-from alphabets import check_alphabet
 
 
 if __name__=='__main__':

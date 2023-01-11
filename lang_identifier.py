@@ -28,7 +28,7 @@ class LanguageIdentifier :
         labels_dict (dict): a dictionary with alphabet names as keys and corresponding languages labels as values.
         tokenizers_dict (dict): a dictionary with alphabet names as keys and corresponding tokenizer as values.
     '''
-    def __init__(self,embeddings_dims,multilingual_alphabets=['cjk','arabic','cyrillic','latin']):
+    def __init__(self,embeddings_dims=50,multilingual_alphabets=['cjk','arabic','cyrillic','latin']):
         self.embeddings_dims=embeddings_dims
         self.multilingual_alphabets = multilingual_alphabets
         self.model_dict = {}
@@ -121,7 +121,7 @@ class LanguageIdentifier :
         '''
         if type(data)==str:
             #Convert the string to  one row dataframe 
-            data = pd.DataFrame({'text':data})
+            data = pd.DataFrame({'text':[data]})
 
         #identify the alphabet of each text in the dataframe
         alphabet = data['text'].apply(lambda row : check_alphabet(row))
@@ -131,7 +131,7 @@ class LanguageIdentifier :
         for a in alphabet.unique():
             if a in self.multilingual_alphabets: 
                 alphabet_idx = data[alphabet==a].index
-                alphabet_preds = self.pred_LSTM(data[alphabet==a],alphabet)
+                alphabet_preds = self.pred_LSTM(data[alphabet==a],a)
                 for idx in alphabet_idx:
                     preds[idx] =  self.labels_dict[a][np.argmax(alphabet_preds.pop(0))]
             else:
