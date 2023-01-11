@@ -11,6 +11,7 @@ Currently supports the following languages : Arabic, Bulgarian, Chinese, Dutch, 
 # How to use
 
 '''python
+
     from lang_identifier import LanguageIdentifier 
     
     sentence = "Vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation."
