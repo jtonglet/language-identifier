@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
 from lang_identifier import LanguageIdentifier 
-from alphabet import check_alphabet
+from alphabets import check_alphabet
 
 
 if __name__=='__main__':
@@ -12,12 +12,6 @@ if __name__=='__main__':
     train = pd.DataFrame(dataset['train'])
     validation = pd.DataFrame(dataset['validation'])
     test = pd.DataFrame(dataset['test'])
-
-    #Identify alphabets for each text
-    train['alphabet'] = train['text'].apply(lambda row : check_alphabet(row))
-    validation['alphabet'] = validation['text'].apply(lambda row : check_alphabet(row))
-    test['alphabet'] = test['text'].apply(lambda row : check_alphabet(row))
-
     #Train the identifier model
     identifier = LanguageIdentifier(embeddings_dims=50,multilingual_alphabets=['cjk','arabic','cyrillic','latin'])  
     identifier.fit(train,validation)

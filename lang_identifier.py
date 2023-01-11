@@ -6,9 +6,11 @@ Created on Saturday Jan 07 2023
 
 #Import packages
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.preprocessing import LabelEncoder
+from alphabets import check_alphabet
 import pickle
 import os
 import warnings
@@ -41,8 +43,10 @@ class LanguageIdentifier :
             train (pandas.DataFrame) : the train set with columns ['text','labels','alphabet']
             validation (pandas.DataFrame) : the validation set with columns ['text','labels','alphabet']
         '''
-        for a in train['alphabet'].unique():
-            num_languages_in_alphabet = train[train.alphabet==a].labels.nunique()
+        train_alphabet = train['text'].apply(lambda row : check_alphabet(row))
+        validation_alphabet = train['text'].apply(lambda row : check_alphabet(row))
+        for a in train_alphabet.unique():
+            num_languages_in_alphabet = train[train_alphabet==a].labels.nunique()
             if a in self.multilingual_alphabets:   
                 print('Alphabet %s : %s languages'%(a,num_languages_in_alphabet))
                 #Define model architecture
@@ -57,31 +61,30 @@ class LanguageIdentifier :
                 self.model_dict[a] = model
             else:
                 #Monolingual alphabet, no further classification, take the most frequent value of the category as language label
-                self.labels_dict[a] = train[train['alphabet']==a].labels.value_counts().index[0]
+                self.labels_dict[a] = train[train_alphabet==a].labels.value_counts().index[0]
         for k in self.model_dict.keys():
             #Create subsets of the train and validation set corresponding to the alphabet
-            train_alphabet = train[train['alphabet']==k]
-            languages_in_alphabet = list(train_alphabet.labels.unique())
+            train_subset = train[train_alphabet==k]
+            languages_in_alphabet = list(train_subset.labels.unique())
             if not validation is None:
-                validation_alphabet = validation[validation['alphabet']==k]
-                validation_alphabet = validation_alphabet[validation['labels'].isin(languages_in_alphabet)]
+                validation_subset = validation[validation_alphabet==k]
+                validation_subset = validation_subset[validation['labels'].isin(languages_in_alphabet)]
             else:
                 validation_alphabet = None
             #Store target labels in the label dictionary
             lencoder =LabelEncoder()
-            lencoder.fit(train_alphabet['labels'])
+            lencoder.fit(train_subset['labels'])
             self.labels_dict[k] = list(lencoder.classes_)
             #Train LSTM model
-            self.fit_LSTM_model(train_alphabet,validation_alphabet,self.model_dict[k])
+            self.fit_LSTM_model(train_subset,validation_subset,self.model_dict[k],k)
 
 
            
-    def fit_LSTM_model(self,train, validation, model):
+    def fit_LSTM_model(self,train, validation, model,alphabet):
         '''
         Train a bidirectional LSTM model for instances belonging to the same alphabet.
         '''
         #Initialize tokenizer
-        alphabet = train['alphabet'].to_list()[0]
         if alphabet=='cjk':
             #For CJK, character level information is used and some punctuation (.,?!) is kept.
             tokenizer = keras.preprocessing.text.Tokenizer(num_words=1000, lower=True,filters='"#$%&()*+-/:;<=>@[\\]^_`{|}~\t\n',
@@ -114,28 +117,34 @@ class LanguageIdentifier :
 
     def predict(self,data):
         '''
-        Predict the language of all instances in a dataset
+        Predict the language of all instances in a dataset or a single string
         '''
+        if type(data)==str:
+            #Convert the string to  one row dataframe 
+            data = pd.DataFrame({'text':data})
+
+        #identify the alphabet of each text in the dataframe
+        alphabet = data['text'].apply(lambda row : check_alphabet(row))
+        #Initialize empty preds vector
         preds = [0 for _ in range(data.shape[0])]
         #Retrieve index of texts and predictions for each alphabet
-        for a in data['alphabet'].unique():
+        for a in alphabet.unique():
             if a in self.multilingual_alphabets: 
-                alphabet_idx = data[data['alphabet']==a].index
-                alphabet_preds = self.pred_LSTM(data[data['alphabet']==a])
+                alphabet_idx = data[alphabet==a].index
+                alphabet_preds = self.pred_LSTM(data[alphabet==a],alphabet)
                 for idx in alphabet_idx:
                     preds[idx] =  self.labels_dict[a][np.argmax(alphabet_preds.pop(0))]
             else:
             #Alphabets with one language, direct prediction
-                for idx in data[data['alphabet']==a].index:
+                for idx in data[alphabet==a].index:
                     preds[idx] = self.labels_dict[a]
         return preds
 
 
-    def pred_LSTM(self, data):
+    def pred_LSTM(self, data,alphabet):
         '''
         Predict all languages for one alphabet with the corresponding LSTM model.
         '''
-        alphabet = data['alphabet'].to_list()[0] #Identify alphabet
         x_seq = self.tokenizers_dict[alphabet].texts_to_sequences(data['text']) #Retrieve tokenizer
         x_seq_padded = keras.preprocessing.sequence.pad_sequences(x_seq,maxlen=200)
         preds = list(self.model_dict[alphabet].predict(x_seq_padded,verbose=0))
