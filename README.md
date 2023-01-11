@@ -10,7 +10,7 @@ Currently supports the following languages : Arabic, Bulgarian, Chinese, Dutch, 
 
 # How to use
 
-'''python
+```python
 
     from lang_identifier import LanguageIdentifier 
     
@@ -20,7 +20,7 @@ Currently supports the following languages : Arabic, Bulgarian, Chinese, Dutch, 
     identifier.predict(sentence)
     >>> ['fr']
     
-'''
+```
 
 
 # Requirements
