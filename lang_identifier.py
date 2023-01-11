@@ -122,6 +122,8 @@ class LanguageIdentifier :
         if type(data)==str:
             #Convert the string to  one row dataframe 
             data = pd.DataFrame({'text':[data]})
+        if type(data)==list:
+            data = pd.DataFrame({'text':data})
 
         #identify the alphabet of each text in the dataframe
         alphabet = data['text'].apply(lambda row : check_alphabet(row))

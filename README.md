@@ -3,7 +3,7 @@
 
 Language Identifier model : takes a sentence as input and predict its language.
 
-The model was trained on the papluca/language-identification dataset available on [HuggingFace](https://huggingface.co/datasets/papluca/language-identification). Pre-trained weights are stored in the *model* folder. It is possible to train the model on another dataset, as long as it contains 3 columns named "text","labels", and "alphabet".
+The model was trained on the papluca/language-identification dataset available on [HuggingFace](https://huggingface.co/datasets/papluca/language-identification). Pre-trained weights are stored in the *model* folder. It is possible to train the model on another dataset, as long as it contains 2 columns named "text","labels".
 
 The  model consists of two hierarchical steps :
 1) Identify with regular expressions the main alphabet used in the text
@@ -25,6 +25,7 @@ The model achieves an accuracy of 97% on the test set of papluca/language-identi
     sentence = "Vous savez, moi je ne crois pas qu'il y ait de bonne ou de mauvaise situation."
     identifier = LanguageIdentifier()
     identifier.load('model/langidentifier')
+    #Accepted input formats are strings (one text), lists, or pandas DataFrames (multiple text)
     identifier.predict(sentence)
     >>> ['fr']
     
