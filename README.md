@@ -10,8 +10,8 @@ The  model consists of two hierarchical steps :
     - For alphabets with only one corresponding language : assign language directly based on regular expressions
     - For alphabets with more than one corresponding language (e.g. latin, arabic) : train a bi-directional LSTM network to predict the language
 
-✅ Currently supports the following alphabets : Arabic, CJK, Cyrillic, Devanagari, Modern Greek, Latin, Thai.
-✅ Currently supports the following languages : Arabic, Bulgarian, Chinese, Dutch, English, French, German, Greek, Hindi, Italian, Japanese, Polish, Portuguese, Russian, Spanish, Swahili, Thai, Turkish, Urdu, Vietnamese.
+- Currently supports the following alphabets : Arabic, CJK, Cyrillic, Devanagari, Modern Greek, Latin, Thai.
+- Currently supports the following languages : Arabic, Bulgarian, Chinese, Dutch, English, French, German, Greek, Hindi, Italian, Japanese, Polish, Portuguese, Russian, Spanish, Swahili, Thai, Turkish, Urdu, Vietnamese.
 
 The model achieves an accuracy of 97% on the test set of papluca/language-identification.
 
